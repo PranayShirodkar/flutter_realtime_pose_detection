@@ -113,6 +113,15 @@ class _HomePageState extends State<HomePage> {
                     screen.height,
                     screen.width,
                     _model),
+                CustomPaint(
+                  painter:BodyPainter(
+                    _recognitions == null ? [] : _recognitions,
+                    math.max(_imageHeight, _imageWidth),
+                    math.min(_imageHeight, _imageWidth),
+                    screen.height,
+                    screen.width),
+                )
+
               ],
             ),
     );

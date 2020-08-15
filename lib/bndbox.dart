@@ -2,6 +2,71 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'models.dart';
 
+
+class BodyPainter extends CustomPainter {
+  Paint _paint;
+  final List<dynamic> results;
+  final int previewH;
+  final int previewW;
+  final double screenH;
+  final double screenW;
+  var bodyMap;
+
+  BodyPainter(this.results, this.previewH, this.previewW, this.screenH, this.screenW){
+    _paint = Paint()
+    ..color=Color(0xffaecbf7)
+    ..strokeCap=StrokeCap.round
+    ..strokeWidth=2;
+    bodyMap = Map();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    bodyMap = Map();
+    results.forEach((re) {
+      var list = re["keypoints"].values.map<Widget>((k) {
+        var _x = k["x"];
+        var _y = k["y"];
+        var scaleW, scaleH, x, y;
+
+        if (screenH / screenW > previewH / previewW) {
+          scaleW = screenH / previewH * previewW;
+          scaleH = screenH;
+          var difW = (scaleW - screenW) / scaleW;
+          x = (_x - difW / 2) * scaleW;
+          y = _y * scaleH;
+        } else {
+          scaleH = screenW / previewW * previewH;
+          scaleW = screenW;
+          var difH = (scaleH - screenH) / scaleH;
+          x = _x * scaleW;
+          y = (_y - difH / 2) * scaleH;
+        }
+        bodyMap[k["part"]] = Offset(x, y);
+      }).toList();
+
+    });
+    paintBody(canvas);
+  }
+
+  void paintBody(Canvas canvas) {
+    bodyMap.forEach((bodyPart, offset) {
+      canvas.drawLine(
+        offset,
+        bodyMap["nose"],
+        _paint,
+      );
+    });
+  }
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    // TODO: implement shouldRepaint
+    return false;
+  }
+  
+}
+
+
 class BndBox extends StatelessWidget {
   final List<dynamic> results;
   final int previewH;
