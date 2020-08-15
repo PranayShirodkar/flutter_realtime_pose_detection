@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:directed_graph/directed_graph.dart';
 import 'dart:math' as math;
 import 'models.dart';
 
 
 class BodyPainter extends CustomPainter {
+  DirectedGraph<String> bodyStructure;
   Paint _paint;
   final List<dynamic> results;
   final int previewH;
@@ -14,10 +16,50 @@ class BodyPainter extends CustomPainter {
 
   BodyPainter(this.results, this.previewH, this.previewW, this.screenH, this.screenW){
     _paint = Paint()
-    ..color=Color(0xffaecbf7)
+    ..color=Color(0xaa00ff00)
     ..strokeCap=StrokeCap.round
-    ..strokeWidth=2;
+    ..strokeWidth=7;
     bodyMap = Map();
+    var nose = Vertex<String>('nose');
+    var rightEye = Vertex<String>('rightEye');
+    var leftEye = Vertex<String>('leftEye');
+    var rightEar = Vertex<String>('rightEar');
+    var leftEar = Vertex<String>('leftEar');
+    var rightShoulder = Vertex<String>('rightShoulder');
+    var leftShoulder = Vertex<String>('leftShoulder');
+    var rightElbow = Vertex<String>('rightElbow');
+    var leftElbow = Vertex<String>('leftElbow');
+    var rightWrist = Vertex<String>('rightWrist');
+    var leftWrist = Vertex<String>('leftWrist');
+    var rightHip = Vertex<String>('rightHip');
+    var leftHip = Vertex<String>('leftHip');
+    var rightKnee = Vertex<String>('rightKnee');
+    var leftKnee = Vertex<String>('leftKnee');
+    var rightAnkle = Vertex<String>('rightAnkle');
+    var leftAnkle = Vertex<String>('leftAnkle');
+    bodyStructure = DirectedGraph<String>(
+      {
+        nose: [rightEye, leftEye],
+        rightEye: [rightEar],
+        leftEye: [leftEar],
+        nose: [rightShoulder, leftShoulder],
+        rightShoulder: [rightElbow, rightHip, leftShoulder],
+        leftShoulder: [leftElbow, leftHip],
+        rightElbow: [rightWrist],
+        leftElbow: [leftWrist],
+        rightHip: [rightKnee],
+        leftHip: [leftKnee],
+        rightKnee: [rightAnkle],
+        leftKnee: [leftAnkle]
+      },
+    );
+//    bodyStructure = DirectedGraph<String>(
+//      {
+//        nose: [rightShoulder, leftShoulder],
+//        rightShoulder: [rightHip, leftShoulder],
+//        leftShoulder: [leftHip],
+//      },
+//    );
   }
 
   @override
@@ -44,18 +86,26 @@ class BodyPainter extends CustomPainter {
         }
         bodyMap[k["part"]] = Offset(x, y);
       }).toList();
-
     });
     paintBody(canvas);
   }
 
   void paintBody(Canvas canvas) {
-    bodyMap.forEach((bodyPart, offset) {
-      canvas.drawLine(
-        offset,
-        bodyMap["nose"],
-        _paint,
-      );
+//    bodyMap.forEach((bodyPart, offset) {
+//      canvas.drawLine(
+//        offset,
+//        bodyMap["nose"],
+//        _paint,
+//      );
+//    });
+    bodyStructure.vertices.forEach((vertex) {
+      bodyStructure.edges(vertex).forEach((otherEnd) {
+        canvas.drawLine(
+          bodyMap[vertex.toString()],
+          bodyMap[otherEnd.toString()],
+          _paint,
+        );
+      });
     });
   }
   @override
