@@ -21,7 +21,7 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> _recognitions;
   int _imageHeight = 0;
   int _imageWidth = 0;
-  String _model = "";
+  String _model = posenet ;
 
   @override
   void initState() {
