@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:directed_graph/directed_graph.dart';
+import 'dart:math' as math;
+
+const double degrees2Radians = math.pi / 180.0;
+var redChannel = 0;
+var greenChannel = 255;
 
 class BodyPainter extends CustomPainter {
   DirectedGraph<String> bodyStructure;
@@ -13,11 +18,12 @@ class BodyPainter extends CustomPainter {
 
   BodyPainter(this.results, this.previewH, this.previewW, this.screenH, this.screenW){
     _paint = Paint()
-      ..color=Color(0xaa00ff00)
+      ..color=Color.fromARGB(170, redChannel, greenChannel, 0)
       ..strokeCap=StrokeCap.round
       ..strokeWidth=7;
     bodyMap = Map();
     var nose = Vertex<String>('nose');
+    var neck = Vertex<String>('neck');
     var rightEye = Vertex<String>('rightEye');
     var leftEye = Vertex<String>('leftEye');
     var rightEar = Vertex<String>('rightEar');
@@ -30,33 +36,34 @@ class BodyPainter extends CustomPainter {
     var leftWrist = Vertex<String>('leftWrist');
     var rightHip = Vertex<String>('rightHip');
     var leftHip = Vertex<String>('leftHip');
+    var tailBone = Vertex<String>('tailBone');
     var rightKnee = Vertex<String>('rightKnee');
     var leftKnee = Vertex<String>('leftKnee');
     var rightAnkle = Vertex<String>('rightAnkle');
     var leftAnkle = Vertex<String>('leftAnkle');
-    bodyStructure = DirectedGraph<String>(
-      {
-        nose: [rightEye, leftEye],
-        rightEye: [rightEar],
-        leftEye: [leftEar],
-        nose: [rightShoulder, leftShoulder],
-        rightShoulder: [rightElbow, rightHip, leftShoulder],
-        leftShoulder: [leftElbow, leftHip],
-        rightElbow: [rightWrist],
-        leftElbow: [leftWrist],
-        rightHip: [rightKnee],
-        leftHip: [leftKnee],
-        rightKnee: [rightAnkle],
-        leftKnee: [leftAnkle]
-      },
-    );
 //    bodyStructure = DirectedGraph<String>(
 //      {
-//        nose: [rightShoulder, leftShoulder],
-//        rightShoulder: [rightHip, leftShoulder],
-//        leftShoulder: [leftHip],
+//        nose: [rightEye, leftEye],
+//        rightEye: [rightEar],
+//        leftEye: [leftEar],
+//        nose: [neck],
+//        neck: [rightShoulder,leftShoulder],
+//        rightShoulder: [rightElbow, rightHip],
+//        leftShoulder: [leftElbow, leftHip],
+//        rightElbow: [rightWrist],
+//        leftElbow: [leftWrist],
+//        rightHip: [rightKnee],
+//        leftHip: [leftKnee],
+//        rightKnee: [rightAnkle],
+//        leftKnee: [leftAnkle]
 //      },
 //    );
+    bodyStructure = DirectedGraph<String>(
+      {
+        nose: [neck],
+        neck: [tailBone],
+      },
+    );
   }
 
   @override
@@ -84,17 +91,43 @@ class BodyPainter extends CustomPainter {
         bodyMap[k["part"]] = Offset(x, y);
       }).toList();
     });
+    bodyMap["neck"] = Offset(
+        (bodyMap["leftShoulder"].dx+bodyMap["rightShoulder"].dx)/2,
+        (bodyMap["leftShoulder"].dy+bodyMap["rightShoulder"].dy)/2);
+    bodyMap["tailBone"] = Offset(
+        (bodyMap["leftHip"].dx+bodyMap["rightHip"].dx)/2,
+        (bodyMap["leftHip"].dy+bodyMap["rightHip"].dy)/2);
+    var gradNoseNeck = (bodyMap["neck"].dy - bodyMap["nose"].dy)/(bodyMap["neck"].dx - bodyMap["nose"].dx);
+    var gradNeckTail = (bodyMap["nose"].dy - bodyMap["tailBone"].dy)/(bodyMap["nose"].dx - bodyMap["tailBone"].dx);
+    var numerator = gradNoseNeck-gradNeckTail;
+    var denominator = 1+(gradNoseNeck*gradNeckTail);
+    var angleBetweenGrads = math.atan((numerator/denominator).abs());
+    var thresh = 20;
+    var updateRate = 50;
+    if ((angleBetweenGrads != double.nan) && (angleBetweenGrads.abs() > (thresh*degrees2Radians))) {
+      if ((255-redChannel) < updateRate) {
+        redChannel = 255;
+      }
+      else {
+        redChannel = redChannel + updateRate;
+      }
+      if (greenChannel < updateRate) {
+        greenChannel = 0;
+      }
+      else {
+        greenChannel = greenChannel - updateRate;
+      }
+    }
+    else if ((angleBetweenGrads != double.nan) && (angleBetweenGrads.abs() <= (thresh*degrees2Radians))) {
+      redChannel = 0;
+      greenChannel = 255;
+    }
     paintBody(canvas);
+
   }
 
   void paintBody(Canvas canvas) {
-//    bodyMap.forEach((bodyPart, offset) {
-//      canvas.drawLine(
-//        offset,
-//        bodyMap["nose"],
-//        _paint,
-//      );
-//    });
+    _paint.color = Color.fromARGB(170, redChannel, greenChannel, 0);
     bodyStructure.vertices.forEach((vertex) {
       bodyStructure.edges(vertex).forEach((otherEnd) {
         canvas.drawLine(
